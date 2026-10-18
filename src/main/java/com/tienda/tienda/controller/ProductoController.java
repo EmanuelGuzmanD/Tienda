@@ -1,28 +1,28 @@
 package com.tienda.tienda.controller;
 
 import com.tienda.tienda.domain.Producto;
-import com.tienda.tienda.service.ProductoService;
+import com.tienda.tienda.service.*;
 import jakarta.validation.Valid;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/producto")
 public class ProductoController {
 
     private final ProductoService productoService;
+    private final CategoriaService categoriaService;
     private final MessageSource messageSource;
 
     @GetMapping("/listado")
@@ -30,6 +30,8 @@ public class ProductoController {
         var productos = productoService.getProductos(false);
         model.addAttribute("productos", productos);
         model.addAttribute("totalProductos", productos.size());
+        var categorias = categoriaService.getCategorias(false);
+        model.addAttribute("categorias", categorias);
         return "producto/listado";
     }
 
@@ -48,6 +50,7 @@ public class ProductoController {
             } catch (DataIntegrityViolationException e) {
                 titulo = "error";
                 mensaje = "producto.error05";
+                log.error(""+e);
             }
         }
         redirectAttributes.addFlashAttribute(titulo, messageSource.getMessage(mensaje, null, Locale.getDefault()));
