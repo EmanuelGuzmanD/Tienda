@@ -3,33 +3,35 @@ package com.tienda.tienda.service;
 import com.tienda.tienda.domain.Producto;
 import com.tienda.tienda.repository.ProductoRepository;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class ProductoService {
 
-    // El repositorio es final para asegurar la inmutabilidad
-    private final ProductoRepository productoRepository;    
+    private final ProductoRepository productoRepository;
     private final FirebaseStorageService firebaseStorageService;
+
+    public ProductoService(ProductoRepository productoRepository,
+            FirebaseStorageService firebaseStorageService) {
+        this.productoRepository = productoRepository;
+        this.firebaseStorageService = firebaseStorageService;
+    }
 
     @Transactional(readOnly = true)
     public List<Producto> getProductos(boolean activo) {
-        if (activo) { //Sólo activos...            
+        if (activo) {
             return productoRepository.findByActivoTrue();
         }
         return productoRepository.findAll();
     }
-    
-     @Transactional(readOnly = true)
+
+    @Transactional(readOnly = true)
     public Optional<Producto> getProducto(Integer idProducto) {
         return productoRepository.findById(idProducto);
     }
@@ -37,7 +39,7 @@ public class ProductoService {
     @Transactional
     public void save(Producto producto, MultipartFile imagenFile) {
         producto = productoRepository.save(producto);
-        if (imagenFile != null && !imagenFile.isEmpty()) { //Si no está vacío... pasaron una imagen...            
+        if (!imagenFile.isEmpty()) { //Si no está vacío... pasaron una imagen...            
             try {
                 String rutaImagen = firebaseStorageService.uploadImage(
                         imagenFile, "producto",
@@ -45,24 +47,39 @@ public class ProductoService {
                 producto.setRutaImagen(rutaImagen);
                 productoRepository.save(producto);
             } catch (IOException e) {
-                log.warn("No fue posible almacenar la imagen de la producto {}",producto.getIdProducto(),e);
+
             }
         }
     }
 
     @Transactional
     public void delete(Integer idProducto) {
-        // Verifica si la producto existe antes de intentar eliminarlo
+        // Verifica si la categoría existe antes de intentar eliminarlo
         if (!productoRepository.existsById(idProducto)) {
             // Lanza una excepción para indicar que el usuario no fue encontrado
-            throw new IllegalArgumentException("La producto con ID " + idProducto + " no existe.");
+            throw new IllegalArgumentException("La categoría con ID " + idProducto + " no existe.");
         }
         try {
             productoRepository.deleteById(idProducto);
-            productoRepository.flush();
         } catch (DataIntegrityViolationException e) {
             // Lanza una nueva excepción para encapsular el problema de integridad de datos
             throw new IllegalStateException("No se puede eliminar la producto. Tiene datos asociados.", e);
         }
     }
+
+    @Transactional(readOnly = true)
+    public List<Producto> consultaDerivada(BigDecimal precioInf, BigDecimal precioSup) {
+        return productoRepository.findByPrecioBetweenOrderByPrecioAsc(precioInf, precioSup);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Producto> consultaJPQL(BigDecimal precioInf, BigDecimal precioSup) {
+        return productoRepository.consultaJPQL(precioInf, precioSup);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Producto> consultaSQL(BigDecimal precioInf, BigDecimal precioSup) {
+        return productoRepository.consultaSQL(precioInf, precioSup);
+    }
+
 }
