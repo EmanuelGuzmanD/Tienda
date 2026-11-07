@@ -66,8 +66,53 @@
         <section th:fragment='consultas' class='row row-cols-4 p-2'>
             <div th:replace="~{consultas/fragmentos :: formConsulta('primary',#{consultas.derivadas},'/consultas/consultaDerivada')}"/>
             <div th:replace="~{consultas/fragmentos :: formConsulta('warning',#{consultas.jpql},'/consultas/consultaJPQL')}"/>
-            <div th:replace="~{consultas/fragmentos :: formConsulta('success',#{consultas.sql},'/consultas/consultaSQL')}"/>
-            <div class='card'><p>Acá va su Práctica #2</p></div>
+            <div th:replace="~{consultas/fragmentos :: formConsulta('success',#{consultas.sql},'/consultas/consultaSQL')}"/>         
+            <!-- Consulta ampliada -->
+    <div class="card">
+        <div class="card-header text-center text-white bg-info">
+            <h5>Consulta ampliada</h5>
+        </div>
+        <form method="post" th:action="@{/consultas/consultaAmpliada}">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Descripción</label>
+                    <input type="text"
+                           name="descripcion"
+                           class="form-control"
+                           placeholder="Buscar producto..."
+                           th:value="${descripcion}"/>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Categoría</label>
+                    <select name="idCategoria" class="form-select">
+                        <option value="">Todas las categorías</option>
+                        <option th:each="c : ${categorias}"
+                                th:value="${c.idCategoria}"
+                                th:text="${c.descripcion}"
+                                th:selected="${idCategoria != null and idCategoria == c.idCategoria}">
+                        </option>
+                    </select>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="soloDisponibles"
+                           value="true"
+                           th:checked="${soloDisponibles}"/>
+                    <label class="form-check-label">
+                        Solo productos disponibles
+                    </label>
+                </div>
+            </div>
+
+            <div class="card-footer text-center">
+                <button type="submit" class="btn btn-info text-white">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    Buscar
+                </button>
+            </div>
+        </form>
+    </div>
         </section>
 
         <div th:fragment='formConsulta(colorForm, textoForm, urlForm)'>

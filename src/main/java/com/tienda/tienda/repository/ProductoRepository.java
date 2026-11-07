@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ProductoRepository extends JpaRepository<Producto, Integer> {
 
@@ -21,4 +22,17 @@ public interface ProductoRepository extends JpaRepository<Producto, Integer> {
     @Query(nativeQuery = true,
             value = "SELECT * FROM producto p WHERE p.precio BETWEEN :precioInf AND :precioSup ORDER BY p.precio ASC")
     public List<Producto> consultaSQL(BigDecimal precioInf, BigDecimal precioSup);
+    
+    /* Para la practica #2:
+    Consulta ampliada: descripción, categoría y existencias*/
+    @Query("SELECT p FROM Producto p "
+            + "WHERE (:descripcion IS NULL OR "
+            + "LOWER(p.descripcion) LIKE LOWER(CONCAT('%', :descripcion, '%'))) "
+            + "AND (:idCategoria IS NULL OR p.categoria.idCategoria = :idCategoria) "
+            + "AND (:soloDisponibles = false OR p.existencias > 0) "
+            + "ORDER BY p.descripcion ASC")
+    public List<Producto> consultaAmpliada(
+            @Param("descripcion") String descripcion,
+            @Param("idCategoria") Integer idCategoria,
+            @Param("soloDisponibles") boolean soloDisponibles);
 }
